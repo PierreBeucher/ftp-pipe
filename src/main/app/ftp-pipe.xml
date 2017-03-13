@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:context="http://www.springframework.org/schema/context" xmlns:ftp="http://www.mulesoft.org/schema/mule/ftp" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:spring="http://www.springframework.org/schema/beans" 
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-current.xsd
+http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/ftp http://www.mulesoft.org/schema/mule/ftp/current/mule-ftp.xsd
+http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-current.xsd">
+    <ftp:connector name="FTP_Source_config" 
+    	pollingFrequency="${ftp-pipe.ftp.source.poll.frequency}" 
+    	validateConnections="true" 
+    	doc:name="FTP" connectionTimeout="${ftp-pipe.ftp.source.connection.timeout}">
+        <reconnect frequency="${ftp-pipe.ftp.source.reconnect.frequency}"
+        	count="${ftp-pipe.ftp.source.reconnect.count}"/>
+    </ftp:connector>
+    <ftp:connector name="FTP_Dest_config" 
+    	validateConnections="true" 
+    	doc:name="FTP" connectionTimeout="${ftp-pipe.ftp.dest.connection.timeout}">
+        <reconnect frequency="${ftp-pipe.ftp.dest.reconnect.frequency}"
+        	count="${ftp-pipe.ftp.dest.reconnect.count}"/>
+    </ftp:connector>
+    <context:property-placeholder location="ftp-pipe.default.properties,ftp-pipe.${mule.env}.properties"/>
+    <flow name="ftp-pipeFlow">
+        <ftp:inbound-endpoint connector-ref="FTP_Source_config" 
+        	host="${ftp-pipe.ftp.source.host}" 
+        	port="${ftp-pipe.ftp.source.port}" 
+        	path="${ftp-pipe.ftp.source.path}" 
+        	user="${ftp-pipe.ftp.source.user}" 
+        	password="${ftp-pipe.ftp.source.password}" 
+        	responseTimeout="10000" doc:name="FTP"/>
+        <logger message="Pipe FTP: #[message.inboundProperties.originalFilename]" level="INFO" doc:name="Log poll"/>
+        <ftp:outbound-endpoint doc:name="FTP"
+        	host="${ftp-pipe.ftp.dest.host}" 
+        	port="${ftp-pipe.ftp.dest.port}" 
+        	path="${ftp-pipe.ftp.dest.path}" 
+        	user="${ftp-pipe.ftp.dest.user}" 
+        	password="${ftp-pipe.ftp.dest.password}" 
+        	connector-ref="FTP_Dest_config" 
+        	responseTimeout="10000"
+        	outputPattern="#[message.inboundProperties.originalFilename]"/>
+    </flow>
+</mule>
